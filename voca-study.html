@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voca 1500 학습 App</title>
+    <style>
+      :root {
+        --primary-color: #4a90e2;
+        --secondary-color: #f5a623;
+        --success-color: #2ec4b6;
+        --danger-color: #e71d36;
+        --background-color: #f4f7f6;
+        --card-color: #ffffff;
+        --text-color: #333333;
+      }
+
+      body {
+        font-family: 'Malgun Gothic', sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .container {
+        max-width: 600px;
+        width: 100%;
+        text-align: center;
+      }
+
+      h1 {
+        color: var(--primary-color);
+        margin-bottom: 20px;
+      }
+
+      .nav-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 30px;
+      }
+
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: bold;
+      }
+
+      .btn-mode {
+        background-color: #e0e0e0;
+        color: #555;
+      }
+
+      .btn-mode.active {
+        background-color: var(--primary-color);
+        color: white;
+      }
+
+      .card-view,
+      .quiz-view {
+        background-color: var(--card-color);
+        border-radius: 15px;
+        padding: 40px 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .word-text {
+        font-size: 36px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: #111;
+      }
+
+      .word-mean {
+        font-size: 22px;
+        color: #666;
+        margin-top: 10px;
+        min-height: 30px;
+      }
+
+      .btn-audio {
+        background-color: transparent;
+        font-size: 24px;
+        color: var(--primary-color);
+        padding: 5px;
+        margin-bottom: 10px;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+      }
+
+      .btn-action {
+        background-color: var(--primary-color);
+        color: white;
+        width: 120px;
+      }
+
+      .quiz-options {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+        width: 100%;
+        max-width: 400px;
+        margin-top: 20px;
+      }
+
+      .option-btn {
+        background-color: #f0f4f8;
+        color: var(--text-color);
+        text-align: left;
+        padding: 15px;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 16px;
+      }
+
+      .option-btn:hover {
+        background-color: #e2e8f0;
+      }
+
+      .option-btn.correct {
+        background-color: var(--success-color);
+        color: white;
+        border-color: var(--success-color);
+      }
+
+      .option-btn.wrong {
+        background-color: var(--danger-color);
+        color: white;
+        border-color: var(--danger-color);
+      }
+
+      .score-board {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 15px;
+        color: var(--primary-color);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .progress {
+        font-size: 14px;
+        color: #888;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📚 Voca 1500 학습기</h1>
+
+      <div class="nav-buttons">
+        <button
+          id="btn-memorize-mode"
+          class="btn-mode active"
+          onclick="switchMode('memorize')"
+        >
+          암기 모드
+        </button>
+        <button
+          id="btn-quiz-mode"
+          class="btn-mode"
+          onclick="switchMode('quiz')"
+        >
+          퀴즈 모드
+        </button>
+      </div>
+
+      <div id="memorize-view" class="card-view">
+        <button class="btn-audio" onclick="playAudio()">🔊</button>
+        <div id="memo-word" class="word-text">Loading...</div>
+        <div
+          id="memo-mean"
+          class="word-mean"
+          onclick="toggleMeaning()"
+          style="cursor: pointer; color: #aaa"
+        >
+          [클릭하여 뜻 보기]
+        </div>
+        <div id="memo-progress" class="progress">0 / 0</div>
+
+        <div class="action-buttons">
+          <button class="btn-action" onclick="prevWord()">이전</button>
+          <button class="btn-action" onclick="nextWord()">다음</button>
+        </div>
+      </div>
+
+      <div id="quiz-view" class="quiz-view hidden">
+        <div id="quiz-score" class="score-board">점수: 0 / 0</div>
+        <div id="quiz-word" class="word-text">Word</div>
+        <button class="btn-audio" onclick="playQuizAudio()">🔊</button>
+
+        <div class="quiz-options">
+          <button class="option-btn" onclick="checkAnswer(0)">1. Option</button>
+          <button class="option-btn" onclick="checkAnswer(1)">2. Option</button>
+          <button class="option-btn" onclick="checkAnswer(2)">3. Option</button>
+          <button class="option-btn" onclick="checkAnswer(3)">4. Option</button>
+        </div>
+
+        <div class="action-buttons">
+          <button
+            id="btn-next-quiz"
+            class="btn-action hidden"
+            onclick="nextQuiz()"
+          >
+            다음 문제
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 1번부터 250번까지의 정제된 단어 데이터셋 (id 항목 제거로 경량화)
+      const vocaData = [
+          { word: "abandon", mean: "버리다, 포기하다" },
+          { word: "abide", mean: "머무르다, 견디다" },
+          { word: "abord", mean: "접근하다, 승선하다" },
+          { word: "banish", mean: "추방하다, 내쫓다" },
+          { word: "cab", mean: "택시, 마차" },
+          { word: "dagger", mean: "단검" },
+          { word: "efficient", mean: "효율적인, 능률적인" },
+          { word: "fable", mean: "우화, 전설" },
+          { word: "gale", mean: "강풍, 돌풍" },
+          { word: "halt", mean: "멈춤, 중단" },
+          { word: "identical", mean: "동일한, 똑같은" },
+          { word: "identify", mean: "확인하다, 식별하다" },
+          { word: "laboratory", mean: "연구실, 실험실" },
+          { word: "machinery", mean: "기계류" },
+          { word: "namely", mean: "즉, 다시 말해" },
+          { word: "objection", mean: "반대, 이의" },
+          { word: "pad", mean: "패드, 완충재" },
+          { word: "radiant", mean: "빛나는, 환한" },
+          { word: "sage", mean: "현자, 현명한" },
+          { word: "salad", mean: "샐러드" },
+          { word: "tablet", mean: "알약, 판판한 판" },
+          { word: "taint", mean: "오염시키다, 더럽히다" },
+          { word: "ultimate", mean: "궁극적인, 최후의" },
+          { word: "vague", mean: "모호한, 희미한" },
+          { word: "wag", mean: "흔들다" },
+          { word: "abolish", mean: "폐지하다" },
+          { word: "barren", mean: "불모의, 척박한" },
+          { word: "befall", mean: "닥치다, 일어나다" },
+          { word: "cabinet", mean: "캐비닛, 보관장" },
+          { word: "dart", mean: "화살, 쏜살같이 움직이다" },
+          { word: "eloquence", mean: "웅변, 달변" },
+          { word: "facility", mean: "시설, 기능, 재능" },
+          { word: "gallant", mean: "용감한, 정중한" },
+          { word: "handicap", mean: "장애, 불리한 조건" },
+          { word: "idol", mean: "우상" },
+          { word: "lance", mean: "긴 창" },
+          { word: "magistrate", mean: "치안 판사, 행정관" },
+          { word: "narrative", mean: "이야기, 서사" },
+          { word: "obligation", mean: "의무, 채무" },
+          { word: "pamphlet", mean: "소책자, 팸플릿" },
+          { word: "radical", mean: "근본적인, 급진적인" },
+          { word: "salmon", mean: "연어" },
+          { word: "sane", mean: "제정신의, 분별 있는" },
+          { word: "tavern", mean: "선술집, 여관" },
+          { word: "tease", mean: "괴롭히다, 놀리다" },
+          { word: "unanimous", mean: "만장일치의" },
+          { word: "vale", mean: "계곡" },
+          { word: "wallet", mean: "지갑" },
+          { word: "xylophone", mean: "실로폰" },
+          { word: "yarn", mean: "실, 이야기" },
+          { word: "absorb", mean: "흡수하다" },
+          { word: "absurd", mean: "터무니없는" },
+          { word: "behalf", mean: "이익, 지지" },
+          { word: "cable", mean: "케이블, 전선" },
+          { word: "calculate", mean: "계산하다" },
+          { word: "dearly", mean: "대단히, 비싸게" },
+          { word: "embarrass", mean: "당황스럽게 만들다" },
+          { word: "factor", mean: "요인, 요소" },
+          { word: "gallery", mean: "미술관, 화랑" },
+          { word: "harmonious", mean: "조화로운" }, // 쉼표 정상 추가 완료
+          { word: "ignorance", mean: "무지, 무식" },
+          { word: "landlord", mean: "집주인, 건물주" },
+          { word: "magnet", mean: "자석" },
+          { word: "naught", mean: "영(0), 무(無)" },
+          { word: "panel", mean: "판판한 판, 패널, 토론자단" },
+          { word: "pang", mean: "심한 고통, 격통" },
+          { word: "radium", mean: "라듐" },
+          { word: "sanitary", mean: "위생적인, 위생의" },
+          { word: "sap", mean: "수액(나무의 즙), 약화시키다" },
+          { word: "Satan", mean: "사탄, 악마" },
+          { word: "scandal", mean: "스캔들, 추문" },
+          { word: "technical", mean: "기술적인" },
+          { word: "technique", mean: "기법, 기술, 공법" },
+          { word: "uncertain", mean: "불확실한" },
+          { word: "valiant", mean: "용감한, 용맹스런" },
+          { word: "abundance", mean: "풍요, 부유" },
+          { word: "abundant", mean: "풍부한" },
+          { word: "behaviour", mean: "행동, 행실" },
+          { word: "bestow", mean: "수여하다, 부여하다" },
+          { word: "calf", mean: "송아지, 종아리" },
+          { word: "campaign", mean: "캠페인, 선거운동" },
+          { word: "debate", mean: "토론, 논쟁" },
+          { word: "embrace", mean: "포옹하다, 받아들이다" },
+          { word: "faculty", mean: "학부, 교수진, 능력" },
+          { word: "gang", mean: "패거리, 갱단" },
+          { word: "harmony", mean: "조화, 화합" },
+          { word: "ignore", mean: "무시하다" },
+          { word: "languish", mean: "머물다, 기력이 쇠하다" },
+          { word: "magnificence", mean: "장대함, 화려함" },
+          { word: "obscure", mean: "모호한, 잘 알기 힘든" },
+          { word: "panic", mean: "공황, 극심한 공포" },
+          { word: "qualify", mean: "자격증을 취득하다, 자격을 주다" },
+          { word: "ragged", mean: "누더기가 된, 다 해진" },
+          { word: "scanty", mean: "얼마 안 되는, 빈약한" },
+          { word: "tedious", mean: "지루한, 싫증나는" },
+          { word: "uncomfortable", mean: "불편한" },
+          { word: "vanish", mean: "사라지다, 없어지다" },
+          { word: "walnut", mean: "호두, 호두나무" },
+          { word: "scar", mean: "흉터, 자국" },
+          { word: "yoke", mean: "멍에, 결속" },
+          { word: "abuse", mean: "남용, 학대, 욕설" },
+          { word: "accommodate", mean: "수용하다, 편의를 도모하다" },
+          { word: "candidate", mean: "후보자, 지원자" },
+          { word: "gap", mean: "틈, 격차" },
+          { word: "illuminate", mean: "밝게 비추다, 조명하다" },
+          { word: "parable", mean: "우화, 비유담" },
+          { word: "raisin", mean: "건포도" },
+          { word: "basic", mean: "기초적인, 기본적인" },
+          { word: "basis", mean: "기초, 근거" },
+          { word: "jealous", mean: "질투하는, 시기하는" },
+          { word: "lapse", mean: "경과, 실수, 소멸" },
+          { word: "captive", mean: "포로, 사로잡힌" },
+          { word: "obedience", mean: "복종, 순종" },
+          { word: "obedient", mean: "순종적인, 복종하는" },
+          { word: "decay", mean: "부패, 쇠퇴" },
+          { word: "magnify", mean: "확대하다, 과장하다" },
+          { word: "rake", mean: "갈퀴, 갈퀴질하다" },
+          { word: "paragraph", mean: "단락, 절" },
+          { word: "economic", mean: "경제의, 경제학의" },
+          { word: "economical", mean: "절약하는, 알뜰한" },
+          { word: "economy", mean: "경제, 절약" },
+          { word: "scarcity", mean: "부족, 결핍" },
+          { word: "majestic", mean: "장엄한, 위엄 있는" },
+          { word: "scare", mean: "겁주다, 놀라게 하다" },
+          { word: "parallel", mean: "평행한, 유사한" },
+          { word: "accord", mean: "일치, 합의" },
+          { word: "accordingly", mean: "그에 따라서, 그러므로" },
+          { word: "bet", mean: "내기, 돈을 걸다" },
+          { word: "capture", mean: "포획하다, 사로잡히다" },
+          { word: "rally", mean: "집회, 결집하다" },
+          { word: "illusion", mean: "환상, 착각" },
+          { word: "negative", mean: "부정적인, 소극적인" },
+          { word: "negotiation", mean: "협상, 절충" },
+          { word: "career", mean: "경력, 직업" },
+          { word: "paraphrase", mean: "바꾸어 표현하다" },
+          { word: "deceit", mean: "속임수, 사기" },
+          { word: "largely", mean: "주로, 대체로" },
+          { word: "random", mean: "무작위의, 임의의" },
+          { word: "gap", mean: "격차, 틈새" },
+          { word: "educate", mean: "교육하다" },
+          { word: "education", mean: "교육" },
+          { word: "parliament", mean: "의회, 국회" },
+          { word: "malice", mean: "악의, 적의" },
+          { word: "rapture", mean: "황홀감, 환희" },
+          { word: "rascal", mean: "악당, 장난꾸러기" },
+          { word: "manhood", mean: "성년, 남성성" },
+          { word: "salutation", mean: "인사, 인사말" },
+          { word: "salute", mean: "경례하다, 인사하다" },
+          { word: "telescope", mean: "망원경" },
+          { word: "lash", mean: "채찍질하다, 강타하다" },
+          { word: "account", mean: "계좌, 설명, 회계" },
+          { word: "accuracy", mean: "정확성, 정밀도" },
+          { word: "accurate", mean: "정확한, 정밀한" },
+          { word: "betray", mean: "배신하다, 배반하다" },
+          { word: "casual", mean: "격식을 차리지 않은, 우연한" },
+          { word: "catalogue", mean: "카탈로그, 목록" },
+          { word: "decline", mean: "감소하다, 거절하다" },
+          { word: "gasp", mean: "숨이 막히다, 헐떡임" },
+          { word: "partake", mean: "참가하다, 함께 먹다" },
+          { word: "latch", mean: "걸쇠, 걸쇠를 걸다" },
+          { word: "manifest", mean: "명백한, 명시하다" },
+          { word: "observance", mean: "준수, 축하" },
+          { word: "caution", mean: "조심, 주의" },
+          { word: "cautious", mean: "신중한, 조심성 있는" },
+          { word: "jealousy", mean: "질투, 시기" },
+          { word: "elaborate", mean: "정교한, 정성 들여 만들다" },
+          { word: "illustrate", mean: "삽화를 넣다, 예증하다" },
+          { word: "partial", mean: "부분적인, 편파적인" },
+          { word: "manifold", mean: "다양한, 다방면의" },
+          { word: "rash", mean: "성급한, 발진" },
+          { word: "immense", mean: "거대한, 엄청난" },
+          { word: "ration", mean: "배급량, 배급하다" },
+          { word: "rational", mean: "합리적인, 이성적인" },
+          { word: "participate", mean: "참여하다, 참가하다" },
+          { word: "scent", mean: "향기, 냄새" },
+          { word: "accuse", mean: "고발하다, 기소하다" },
+          { word: "accustom", mean: "익숙하게 만들다" },
+          { word: "beware", mean: "조심하다, 경계하다" },
+          { word: "cement", mean: "시멘트, 결합하다" },
+          { word: "cemetery", mean: "공동묘지" },
+          { word: "manly", mean: "남자다운, 씩씩한" },
+          { word: "decorate", mean: "장식하다" },
+          { word: "decoration", mean: "장식, 장식품" },
+          { word: "network", mean: "통신망, 네트워크" },
+          { word: "impatience", mean: "성급함, 안달" },
+          { word: "vapour", mean: "증기, 김" },
+          { word: "manufacture", mean: "제조하다, 생산" },
+          { word: "electric", mean: "전기의" },
+          { word: "electricity", mean: "전기" },
+          { word: "react", mean: "반응하다" },
+          { word: "reaction", mean: "반응" },
+          { word: "vertical", mean: "수직의, 세로의" },
+          { word: "implement", mean: "도구, 도구를 이행하다" },
+          { word: "temper", mean: "성질, 기질, 완화시키다" },
+          { word: "warrant", mean: "보증서, 영장, 보증하다" },
+          { word: "realm", mean: "영역, 범위" },
+          { word: "particle", mean: "입자, 극소량" },
+          { word: "satire", mean: "풍자" },
+          { word: "satirist", mean: "풍자작가" },
+          { word: "passionate", mean: "열정적인" },
+          { word: "acute", mean: "급성의, 예리한" },
+          { word: "adapt", mean: "적응하다, 개조하다" },
+          { word: "biography", mean: "전기, 일대기" },
+          { word: "biology", mean: "생물학" },
+          { word: "cereal", mean: "곡물, 시리얼" },
+          { word: "fatal", mean: "치명적인" },
+          { word: "Latin", mean: "라틴어의, 라틴 사람" },
+          { word: "defeat", mean: "패배시키다, 패배" },
+          { word: "genuine", mean: "진짜의, 진실한" },
+          { word: "imply", mean: "암시하다, 내포하다" },
+          { word: "certificate", mean: "증명서, 자격증" },
+          { word: "jest", mean: "농담, 장난" },
+          { word: "elegant", mean: "우아한, 고상한" },
+          { word: "manuscript", mean: "원고" },
+          { word: "obstacle", mean: "장애물" },
+          { word: "challenge", mean: "도전, 이의를 제기하다" },
+          { word: "schedule", mean: "일정, 스케줄" },
+          { word: "margin", mean: "여백, 여유, 마진" },
+          { word: "paste", mean: "풀, 반죽, 붙이다" },
+          { word: "rebel", mean: "반역자, 반란을 일으키다" },
+          { word: "rebellion", mean: "반란, 폭동" },
+          { word: "scheme", mean: "계획, 책략" },
+          { word: "patch", mean: "조각, 패치, 수선하다" },
+          { word: "scholarship", mean: "장학금, 학문" },
+          { word: "scope", mean: "범위, 시야" },
+          { word: "adequate", mean: "적절한, 충분한" },
+          { word: "blacksmith", mean: "대장장이" },
+          { word: "characteristic", mean: "특징, 특성, 독특한" },
+          { word: "chat", mean: "잡담하다, 채팅" },
+          { word: "treaty", mean: "조약, 협정" },
+          { word: "impose", mean: "부과하다, 강요하다" },
+          { word: "imposing", mean: "인상적인, 당당한" },
+          { word: "defect", mean: "결함, 결점" },
+          { word: "neutral", mean: "중립의, 공평한" },
+          { word: "feast", mean: "연회, 잔치" },
+          { word: "latitude", mean: "위도, 자유" },
+          { word: "cheat", mean: "속이다, 부정행위를 하다" },
+          { word: "scorch", mean: "그을리다, 태우다" },
+          { word: "patent", mean: "특허, 특허권" },
+          { word: "element", mean: "요소, 성분" },
+          { word: "elementary", mean: "초보의, 기본적인" },
+          { word: "Scotch", mean: "스카치, 스코틀랜드의" },
+          { word: "temperance", mean: "절제, 금주" },
+          { word: "marine", mean: "해양의, 바다의" },
+          { word: "mariner", mean: "선원, 선원인" },
+          { word: "pathetic", mean: "애처로운, 한심한" },
+          { word: "violate", mean: "위반하다, 침해하다" },
+          { word: "unfold", mean: "펼치다, 전개되다" },
+          { word: "rebuke", mean: "비난하다, 꾸짖다" }
+      ];
+
+      let currentIndex = 0;
+      let showMeaning = false;
+
+      let quizCurrentWord = null;
+      let quizOptions = [];
+      let quizTotal = 0;
+      let quizCorrectCount = 0;
+      let quizAnswered = false;
+
+      window.onload = function() {
+          updateMemorizeCard();
+      };
+
+      function switchMode(mode) {
+          document.getElementById('btn-memorize-mode').classList.remove('active');
+          document.getElementById('btn-quiz-mode').classList.remove('active');
+          document.getElementById('memorize-view').classList.add('hidden');
+          document.getElementById('quiz-view').classList.add('hidden');
+
+          if(mode === 'memorize') {
+              document.getElementById('btn-memorize-mode').classList.add('active');
+              document.getElementById('memorize-view').classList.remove('hidden');
+              updateMemorizeCard();
+          } else if(mode === 'quiz') {
+              document.getElementById('btn-quiz-mode').classList.add('active');
+              document.getElementById('quiz-view').classList.remove('hidden');
+              resetQuiz();
+              setupQuizQuestion();
+          }
+      }
+
+      function updateMemorizeCard() {
+          if(vocaData.length === 0) return;
+          const current = vocaData[currentIndex];
+          document.getElementById('memo-word').innerText = current.word;
+
+          if(showMeaning) {
+              document.getElementById('memo-mean').innerText = current.mean;
+              document.getElementById('memo-mean').style.color = "var(--text-color)";
+          } else {
+              document.getElementById('memo-mean').innerText = "[클릭하여 뜻 보기]";
+              document.getElementById('memo-mean').style.color = "#aaa";
+          }
+
+          document.getElementById('memo-progress').innerText = `${currentIndex + 1} / ${vocaData.length}`;
+      }
+
+      function toggleMeaning() {
+          showMeaning = !showMeaning;
+          updateMemorizeCard();
+      }
+
+      function nextWord() {
+          showMeaning = false;
+          currentIndex = (currentIndex + 1) % vocaData.length;
+          updateMemorizeCard();
+          playAudio();
+      }
+
+      function prevWord() {
+          showMeaning = false;
+          currentIndex = (currentIndex - 1 + vocaData.length) % vocaData.length;
+          updateMemorizeCard();
+          playAudio();
+      }
+
+      function playAudio() {
+          const word = vocaData[currentIndex].word;
+          speak(word);
+      }
+
+      function resetQuiz() {
+          quizTotal = 0;
+          quizCorrectCount = 0;
+          updateScoreBoard();
+      }
+
+      function updateScoreBoard() {
+          document.getElementById('quiz-score').innerText = `점수: ${quizCorrectCount} / ${quizTotal}`;
+      }
+
+      function setupQuizQuestion() {
+          quizAnswered = false;
+          document.getElementById('btn-next-quiz').classList.add('hidden');
+
+          const randomIndex = Math.floor(Math.random() * vocaData.length);
+          quizCurrentWord = vocaData[randomIndex];
+
+          document.getElementById('quiz-word').innerText = quizCurrentWord.word;
+
+          let options = [quizCurrentWord.mean];
+          while(options.length < 4) {
+              const randOpt = vocaData[Math.floor(Math.random() * vocaData.length)].mean;
+              if(!options.includes(randOpt)) {
+                  options.push(randOpt);
+              }
+          }
+
+          quizOptions = options.sort(() => Math.random() - 0.5);
+
+          const buttons = document.querySelectorAll('.option-btn');
+          buttons.forEach((btn, index) => {
+              btn.innerText = `${index + 1}. ${quizOptions[index]}`;
+              btn.className = "option-btn";
+          });
+
+          speak(quizCurrentWord.word);
+      }
+
+      function playQuizAudio() {
+          if(quizCurrentWord) speak(quizCurrentWord.word);
+      }
+
+      function checkAnswer(selectedIndex) {
+          if(quizAnswered) return;
+          quizAnswered = true;
+          quizTotal++;
+
+          const buttons = document.querySelectorAll('.option-btn');
+          const correctIndex = quizOptions.indexOf(quizCurrentWord.mean);
+
+          if(selectedIndex === correctIndex) {
+              buttons[selectedIndex].classList.add('correct');
+              quizCorrectCount++;
+          } else {
+              buttons[selectedIndex].classList.add('wrong');
+              buttons[correctIndex].classList.add('correct');
+          }
+
+          updateScoreBoard();
+          document.getElementById('btn-next-quiz').classList.remove('hidden');
+      }
+
+      function nextQuiz() {
+          setupQuizQuestion();
+      }
+
+      function speak(text) {
+          if ('speechSynthesis' in window) {
+              window.speechSynthesis.cancel();
+              const utterance = new SpeechSynthesisUtterance(text);
+              utterance.lang = 'en-US';
+              utterance.rate = 0.85;
+              window.speechSynthesis.speak(utterance);
+          }
+      }
+    </script>
+  </body>
+</html>
