@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minimal Web-OS Workspace v1.4 (RadioHankook Fixed)</title>
+    <title>Minimal Web-OS Workspace v1.5 (RadioHankook Official Fixed)</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -68,11 +68,11 @@
         /* 라디오 전용 UI 컴포넌트 */
         .radio-section-title { font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;}
         .premium-card {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.05) 100%);
-            border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 16px;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.3); padding: 14px; border-radius: 8px; margin-bottom: 16px;
             cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;
         }
-        .premium-card:hover { transform: translateY(-1px); background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.1) 100%); }
+        .premium-card:hover { transform: translateY(-1px); border-color: rgba(59, 130, 246, 0.6); background: rgba(30, 41, 59, 0.8); }
         
         .search-box { display: flex; gap: 8px; margin-bottom: 12px; }
         .search-box input {
@@ -129,7 +129,7 @@
     <div class="desktop">
         <div class="icon" onclick="openWindow('win-music')">
             <div class="icon-img" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">📻</div>
-            <span>Lo-Fi & Radio</span>
+            <span>Radio & Lo-Fi</span>
         </div>
         <div class="icon" onclick="openWindow('win-diary')">
             <div class="icon-img">📓</div>
@@ -148,13 +148,13 @@
         </div>
         <div class="window-content">
             
-            <div class="radio-section-title">Pre-set Station</div>
-            <div class="premium-card" onclick="playStream('https://ice8.securenetsystems.net/KOAM', '라디오한국 (Radio Hankook)')">
+            <div class="radio-section-title">Official Station</div>
+            <div class="premium-card" onclick="playStream('https://ice42.securenetsystems.net/KJTB', '라디오한국 (RADIOHANKOOK.com)')">
                 <div>
-                    <span style="font-size: 16px; margin-right: 6px;">🇰🇷</span>
-                    <span style="font-weight: 600; color: #fecaca;">라디오한국 서울/시애틀</span>
+                    <span style="font-size: 16px; margin-right: 8px;">🇰🇷</span>
+                    <span style="font-weight: 600; color: #fff;">라디오한국 시애틀/워싱턴</span>
                 </div>
-                <span style="font-size: 11px; color: #ef4444; background: rgba(239,68,68,0.15); padding: 2px 6px; border-radius: 4px; font-weight: 600;">LIVE ON</span>
+                <span style="font-size: 11px; color: #3b82f6; background: rgba(59,130,246,0.15); padding: 2px 8px; border-radius: 4px; font-weight: 600;">OFFICIAL</span>
             </div>
 
             <div class="radio-section-title">Global Stream Finder</div>
@@ -198,7 +198,7 @@
     </div>
 
     <div class="taskbar">
-        <div style="color: #fff; font-weight: 600; font-size: 14px;">Beta v1.4</div>
+        <div style="color: #fff; font-weight: 600; font-size: 14px;">Beta v1.5</div>
         <div class="ad-space" id="adsense-slot">
             [Google AdSense Standard Banner - Keeps this space 100% Free]
         </div>
@@ -210,9 +210,3 @@
             const win = document.getElementById(id);
             win.style.display = 'flex';
             document.querySelectorAll('.window').forEach(w => w.style.zIndex = 10);
-            win.style.zIndex = 20;
-        }
-        function closeWindow(id) { 
-            document.getElementById(id).style.display = 'none'; 
-            if(id === 'win-music') {
-                document.getElementById('audio-engine').pause();
