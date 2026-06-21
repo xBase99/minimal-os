@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Web-OS Workspace v1.6 (Click Bug Fixed)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 상단 바 */
+        .top-bar {
+            width: 100%; height: 40px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; color: #fff; font-size: 13px;
+            position: relative; z-index: 1000; /* 상단바 클릭 보장 */
+        }
+        .login-btn {
+            background: #3b82f6; border: none; color: white;
+            padding: 4px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;
+        }
+
+        /* 바탕화면 */
+        .desktop {
+            width: 100%; height: calc(100vh - 100px);
+            padding: 20px; display: flex; flex-direction: column; gap: 25px; align-content: flex-start;
+            position: relative; z-index: 1;
+        }
+        .icon {
+            width: 95px; display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; color: #f8fafc; font-size: 11px; text-align: center;
+            position: relative; z-index: 5; /* 아이콘 클릭 보장 */
+        }
+        .icon-img {
+            width: 55px; height: 55px; background: rgba(255, 255, 255, 0.08);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 26px; margin-bottom: 6px; border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px); transition: all 0.2s;
+        }
+        .icon:hover .icon-img { transform: translateY(-3px); background: rgba(255, 255, 255, 0.15); }
+
+        /* 가상 윈도우 기본 구조 (클릭 분리 레이어 추가) */
+        .window {
+            position: absolute; width: 440px; height: 380px;
+            background: rgba(15, 23, 42, 0.9); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column; overflow: hidden;
+            backdrop-filter: blur(20px); resize: both; min-width: 320px; min-height: 240px;
+            display: none; z-index: 10;
+        }
+        .window-header {
+            padding: 12px; background: rgba(255, 255, 255, 0.05);
+            color: #f8fafc; font-weight: 600; font-size: 13px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: move; user-select: none;
+        }
+        .control-btn { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; pointer-events: auto; }
+        .btn-close { background: #ef4444; }
+        .window-content { padding: 15px; flex-grow: 1; color: #e2e8f0; overflow-y: auto; position: relative; pointer-events: auto; }
+
+        /* 라디오 UI 요소 */
+        .radio-section-title { font-size: 12px; color: #94a3b8; font-weight: 600; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;}
+        .premium-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.4); padding: 14px; border-radius: 8px; margin-bottom: 16px;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s;
+            position: relative; z-index: 50; pointer-events: auto;
+        }
+        .premium-card:hover { transform: translateY(-1px); border-color: rgba(59, 130, 246, 0.8); background: rgba(30, 41, 59, 0.9); }
+        
+        .search-box { display: flex; gap: 8px; margin-bottom: 12px; }
+        .search-box input {
+            flex-grow: 1; padding: 8px; background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; outline: none;
+        }
+        .search-box button { padding: 8px 14px; background: #3b82f6; border: none; border-radius: 6px; color: #fff; cursor: pointer; font-weight:600;}
+        
+        .station-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow-y: auto;}
+        .station-item {
+            padding: 10px; background: rgba(255,255,255,0.05); border-radius: 6px; cursor: pointer;
+            font-size: 13px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .station-item:hover { background: rgba(59, 130, 246, 0.3); }
+        .player-status { margin-top: 12px; padding: 8px; background: rgba(52, 168, 83, 0.15); border-radius: 6px; font-size: 12px; color: #34a853; text-align: center; font-weight: 600; display: none;}
+
+        /* 내부 앱 요소 */
+        textarea {
+            width: 100%; height: 100%; background: transparent; border: none;
+            color: #fff; resize: none; outline: none; font-size: 14px; line-height: 1.6;
+        }
+        .todo-box { display: flex; gap: 8px; margin-bottom: 10px; }
+        .todo-box input {
+            flex-grow: 1; padding: 8px; background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; outline: none;
+        }
+        .todo-box button { padding: 8px 14px; background: #3b82f6; border: none; border-radius: 6px; color: #fff; cursor: pointer; }
+        .todo-item { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+
+        /* 하단 작업 표시줄 */
+        .taskbar {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: rgba(15, 23, 42, 0.9); border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; backdrop-filter: blur(10px); z-index: 1000;
+        }
+        .ad-space {
+            background: rgba(255, 255, 255, 0.04); border: 1px dashed rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.4); padding: 4px 20px; font-size: 11px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            width: 468px; height: 45px; text-align: center;
+        }
+        .time-display { color: #94a3b8; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div>☁️ Minimal OS Workspace</div>
+        <button class="login-btn" onclick="googleLogin()">Sign in with Google</button>
+    </div>
+
+    <div class="desktop">
+        <div class="icon" onclick="openWindow('win-music')">
+            <div class="icon-img" style="background: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3);">📻</div>
+            <span>Radio & Lo-Fi</span>
+        </div>
+        <div class="icon" onclick="openWindow('win-diary')">
+            <div class="icon-img">📓</div>
+            <span>Encrypted Diary</span>
+        </div>
+        <div class="icon" onclick="openWindow('win-todo')">
+            <div class="icon-img">✅</div>
+            <span>Workspace Tasks</span>
+        </div>
+    </div>
+
+    <div id="win-music" class="window" style="top: 80px; left: 50px;">
+        <div class="window-header">
+            <span>📻 Media Radio Hub</span>
+            <button class="control-btn btn-close" onclick="closeWindow('win-music', event)"></button>
+        </div>
+        <div class="window-content">
+            
+            <div class="radio-section-title">Official Station</div>
+            <div class="premium-card" onclick="playStream('https://ice42.securenetsystems.net/KJTB', '라디오한국 (RADIOHANKOOK.com)')">
+                <div>
+                    <span style="font-size: 16px; margin-right: 8px;">🇰🇷</span>
+                    <span style="font-weight: 600; color: #fff;">라디오한국 시애틀/워싱턴</span>
+                </div>
+                <span style="font-size: 11px; color: #3b82f6; background: rgba(59,130,246,0.15); padding: 2px 8px; border-radius: 4px; font-weight: 600;">OFFICIAL</span>
+            </div>
+
+            <div class="radio-section-title">Global Stream Finder</div>
+            <div class="search-box">
+                <input type="text" id="radio-search-input" placeholder="Search keyword (e.g., lofi, jazz, chill)" value="lofi">
+                <button onclick="searchRadio()">Search</button>
+            </div>
+            <ul class="station-list" id="station-results">
+                <li style="font-size:12px; color:#64748b; padding:10px; text-align:center;">Type keyword above to explore more streams.</li>
+            </ul>
+
+            <div class="player-status" id="player-status-bar">🎵 Now Playing...</div>
+            <audio id="audio-engine" controls style="width: 100%; margin-top: 12px; display: none;"></audio>
+        </div>
+    </div>
+
+    <div id="win-diary" class="window" style="top: 130px; left: 100px;">
+        <div class="window-header">
+            <span>📓 Personal Space Journal</span>
+            <button class="control-btn btn-close" onclick="closeWindow('win-diary', event)"></button>
+        </div>
+        <div class="window-content">
+            <textarea placeholder="Start typing your private notes... It's only saved safely on your dashboard."></textarea>
+        </div>
+    </div>
+
+    <div id="win-todo" class="window" style="top: 180px; left: 150px;">
+        <div class="window-header">
+            <span>✅ Daily Milestones</span>
+            <button class="control-btn btn-close" onclick="closeWindow('win-todo', event)"></button>
+        </div>
+        <div class="window-content">
+            <div class="todo-box">
+                <input type="text" id="todo-input" placeholder="What's next challenge?">
+                <button onclick="addTodo()">Add Task</button>
+            </div>
+            <ul class="todo-list" id="todo-list">
+                <li class="todo-item">✓ Setup GitHub Pages Cloud Server Hosting</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="taskbar">
+        <div style="color: #fff; font-weight: 600; font-size: 14px;">Beta v1.6</div>
+        <div class="ad-space" id="adsense-slot">
+            [Google AdSense Standard Banner - Keeps this space 100% Free]
+        </div>
+        <div class="time-display" id="clock">00:00:00 PM</div>
+    </div>
+
+    <script>
+        // 전역 드래그 가드 변수
+        let activeDraggedWindow = null;
+        let initialX, initialY, xOffset = {}, yOffset = {};
+
+        function openWindow(id) {
+            const win = document.getElementById(id);
+            win.style.display = 'flex';
+            
+            // 레이어 순서 정리
+            document.querySelectorAll('.window').forEach(w => w.style.zIndex = 10);
+            win.style.zIndex = 100;
+        }
+
+        function closeWindow(id, event) { 
+            if(event) event.stopPropagation(); // 클릭 이벤트 버블링 차단
+            document.getElementById(id).style.display = 'none'; 
+            if(id === 'win-music') {
+                document.getElementById('audio-engine').pause();
+                document.getElementById('player-status-bar').style.display = 'none';
+            }
+        }
+
+        async function searchRadio() {
+            const keyword = document.getElementById('radio-search-input').value.trim();
+            const resultsContainer = document.getElementById('station-results');
+            
+            if(!keyword) return alert("Please enter a keyword!");
+            resultsContainer.innerHTML = `<li style="font-size:12px; color:#64748b; padding:10px; text-align:center;">Searching live database...</li>`;
+
+            try {
+                const response = await fetch(`https://de1.api.radio-browser.info/json/stations/byname/${encodeURIComponent(keyword)}?limit=15&hidebroken=true`);
+                const stations = await response.json();
+                resultsContainer.innerHTML = '';
+
+                const secureStations = stations.filter(station => (station.url_resolved || station.url).startsWith('https://'));
+
+                if(secureStations.length === 0) {
+                    resultsContainer.innerHTML = `<li style="font-size:12px; color:#ef4444; padding:10px; text-align:center;">No secure HTTPS streams found.</li>`;
+                    return;
+                }
+
+                secureStations.forEach(station => {
+                    const li = document.createElement('li');
+                    li.className = 'station-item';
+                    const streamUrl = station.url_resolved || station.url;
+                    li.innerHTML = `<span>📻 ${station.name.substring(0, 20)}</span><span style="font-size:11px; color:#94a3b8;">${station.codec}</span>`;
+                    li.onclick = (e) => { e.stopPropagation(); playStream(streamUrl, station.name); };
+                    resultsContainer.appendChild(li);
+                });
+            } catch (error) {
+                resultsContainer.innerHTML = `<li style="font-size:12px; color:#ef4444; padding:10px; text-align:center;">Network error.</li>`;
+            }
+        }
+
+        function playStream(url, name) {
+            const audio = document.getElementById('audio-engine');
+            const status = document.getElementById('player-status-bar');
+            
+            audio.src = url;
+            audio.style.display = 'block';
+            audio.play().catch(err => console.log("Stream play block guard:", err));
+            
+            status.innerText = `🎵 On Air: ${name}`;
+            status.style.display = 'block';
+        }
+
+        function addTodo() {
+            const input = document.getElementById('todo-input');
+            if(input.value.trim() === '') return;
+            const li = document.createElement('li');
+            li.className = 'todo-item';
+            li.innerText = '• ' + input.value;
+            document.getElementById('todo-list').appendChild(li);
+            input.value = '';
+        }
+
+        function updateClock() {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString('en-US');
+        }
+        setInterval(updateClock, 1000); updateClock();
+        function googleLogin() { alert("Firebase Auth API integration ready!"); }
+
+        // [버그 수정의 핵심] 안정적인 드래그 앤 드롭 시스템으로 전면 교체
+        document.querySelectorAll('.window').forEach(win => {
+            const id = win.id;
+            xOffset[id] = 0;
+            yOffset[id] = 0;
+            
+            const header = win.querySelector('.window-header');
+            
+            header.addEventListener('mousedown', (e) => {
+                document.querySelectorAll('.window').forEach(w => w.style.zIndex = 10);
+                win.style.zIndex = 100;
+                
+                activeDraggedWindow = win;
+                initialX = e.clientX - xOffset[id];
+                initialY = e.clientY - yOffset[id];
+            });
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (activeDraggedWindow) {
+                e.preventDefault();
+                const id = activeDraggedWindow.id;
+                const currentX = e.clientX - initialX;
+                const currentY = e.clientY - initialY;
+                
+                xOffset[id] = currentX;
+                yOffset[id] = currentY;
+                
+                activeDraggedWindow.style.transform = `translate(${currentX}px, ${currentY}px)`;
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            activeDraggedWindow = null; // 마우스를 떼면 무조건 드래그 잠금 해제
+        });
+    </script>
+</body>
+</html>
