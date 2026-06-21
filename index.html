@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minimal Web-OS Workspace v1.1 (Beta)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 상단 바 (로그인 및 상태창) */
+        .top-bar {
+            width: 100%; height: 40px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; color: #fff; font-size: 13px;
+        }
+        .login-btn {
+            background: #3b82f6; border: none; color: white;
+            padding: 4px 12px; border-radius: 4px; cursor: pointer; font-weight: 600;
+        }
+
+        /* 바탕화면 */
+        .desktop {
+            width: 100%; height: calc(100vh - 100px);
+            padding: 20px; display: flex; flex-direction: column; gap: 25px; align-content: flex-start;
+        }
+        .icon {
+            width: 80px; display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; color: #f8fafc; font-size: 11px; text-align: center;
+        }
+        .icon-img {
+            width: 55px; height: 55px; background: rgba(255, 255, 255, 0.08);
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 26px; margin-bottom: 6px; border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(5px); transition: all 0.2s;
+        }
+        .icon:hover .icon-img { transform: translateY(-3px); background: rgba(255, 255, 255, 0.15); }
+
+        /* 가상 윈도우 */
+        .window {
+            position: absolute; width: 420px; height: 320px;
+            background: rgba(15, 23, 42, 0.85); border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+            display: flex; flex-direction: column; overflow: hidden;
+            backdrop-filter: blur(20px); resize: both; min-width: 280px; min-height: 200px;
+            display: none; z-index: 10;
+        }
+        .window-header {
+            padding: 12px; background: rgba(255, 255, 255, 0.05);
+            color: #f8fafc; font-weight: 600; font-size: 13px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: move; user-select: none;
+        }
+        .control-btn { width: 12px; height: 12px; border-radius: 50%; border: none; cursor: pointer; }
+        .btn-close { background: #ef4444; }
+        .window-content { padding: 15px; flex-grow: 1; color: #e2e8f0; overflow-y: auto; }
+
+        /* 앱 내부 구성 */
+        textarea {
+            width: 100%; height: 100%; background: transparent; border: none;
+            color: #fff; resize: none; outline: none; font-size: 14px; line-height: 1.6;
+        }
+        .todo-box { display: flex; gap: 8px; margin-bottom: 10px; }
+        .todo-box input {
+            flex-grow: 1; padding: 8px; background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; outline: none;
+        }
+        .todo-box button { padding: 8px 14px; background: #3b82f6; border: none; border-radius: 6px; color: #fff; cursor: pointer; }
+        .todo-item { padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; }
+
+        /* 하단 작업 표시줄 및 고정 광고판 */
+        .taskbar {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: rgba(15, 23, 42, 0.9); border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; backdrop-filter: blur(10px); z-index: 100;
+        }
+        .ad-space {
+            background: rgba(255, 255, 255, 0.04); border: 1px dashed rgba(255, 255, 255, 0.2);
+            color: rgba(255, 255, 255, 0.4); padding: 4px 20px; font-size: 11px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            width: 468px; height: 45px; text-align: center;
+        }
+        .time-display { color: #94a3b8; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <!-- 상단 툴바 (구글 로그인 탑재 구역) -->
+    <div class="top-bar">
+        <div>☁️ Minimal OS Workspace</div>
+        <button class="login-btn" onclick="googleLogin()">Sign in with Google</button>
+    </div>
+
+    <!-- 바탕화면 앱 아이콘 -->
+    <div class="desktop">
+        <div class="icon" onclick="openWindow('win-music')">
+            <div class="icon-img">🎵</div>
+            <span>Lo-Fi Radio</span>
+        </div>
+        <div class="icon" onclick="openWindow('win-diary')">
+            <div class="icon-img">📓</div>
+            <span>Encrypted Diary</span>
+        </div>
+        <div class="icon" onclick="openWindow('win-todo')">
+            <div class="icon-img">✅</div>
+            <span>Workspace Tasks</span>
+        </div>
+    </div>
+
+    <!-- 앱 1: 음악 플레이어 -->
+    <div id="win-music" class="window" style="top: 80px; left: 100px;">
+        <div class="window-header">
+            <span>🎵 Focus Music Station</span>
+            <button class="control-btn btn-close" onclick="closeWindow('win-music')"></button>
+        </div>
+        <div class="window-content" style="padding:0;">
+            <iframe width="100%" height="100%" src="https://www.youtube.com/embed/jfKfPfyJRdk" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+    </div>
+
+    <!-- 앱 2: 일기장 -->
+    <div id="win-diary" class="window" style="top: 130px; left: 200px;">
+        <div class="window-header">
+            <span>📓 Personal Space Journal</span>
+            <button class="control-btn btn-close" onclick="closeWindow('win-diary')"></button>
+        </div>
+        <div class="window-content">
+            <textarea placeholder="Start typing your private notes... It's only saved safely on your dashboard."></textarea>
+        </div>
+    </div>
+
+    <!-- 앱 3: 일정 관리 -->
+    <div id="win-todo" class="window" style="top: 180px; left: 300px;">
+        <div class="window-header">
+            <span>✅ Daily Milestones</span>
+            <button class="control-btn btn-close" onclick="closeWindow('win-todo')"></button>
+        </div>
+        <div class="window-content">
+            <div class="todo-box">
+                <input type="text" id="todo-input" placeholder="What's next challenge?">
+                <button onclick="addTodo()">Add Task</button>
+            </div>
+            <ul class="todo-list" id="todo-list">
+                <li class="todo-item">✓ Setup GitHub Pages Cloud Server Hosting</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- 하단 타스크바 및 대형 광고판 -->
+    <div class="taskbar">
+        <div style="color: #fff; font-weight: 600; font-size: 14px;">Beta v1.1</div>
+        
+        <!-- 추후 구글 애드센스 코드가 삽입될 최적의 자리 -->
+        <div class="ad-space" id="adsense-slot">
+            [Google AdSense Standard Banner - Keeps this space 100% Free]
+        </div>
+        
+        <div class="time-display" id="clock">00:00:00 PM</div>
+    </div>
+
+    <script>
+        function openWindow(id) {
+            const win = document.getElementById(id);
+            win.style.display = 'flex';
+            document.querySelectorAll('.window').forEach(w => w.style.zIndex = 10);
+            win.style.zIndex = 20;
+        }
+        function closeWindow(id) { document.getElementById(id).style.display = 'none'; }
+
+        function addTodo() {
+            const input = document.getElementById('todo-input');
+            if(input.value.trim() === '') return;
+            const li = document.createElement('li');
+            li.className = 'todo-item';
+            li.innerText = '• ' + input.value;
+            document.getElementById('todo-list').appendChild(li);
+            input.value = '';
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock').innerText = now.toLocaleTimeString('en-US');
+        }
+        setInterval(updateClock, 1000); updateClock();
+
+        // 가상 로그인 데모 기능
+        function googleLogin() {
+            alert("Firebase Auth API integration is ready for launch!");
+        }
+
+        // 마우스 드래그 창 이동 로직
+        document.querySelectorAll('.window').forEach(win => {
+            const header = win.querySelector('.window-header');
+            let isDragging = false;
+            let currentX, currentY, initialX, initialY;
+            let xOffset = 0, yOffset = 0;
+
+            header.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                document.querySelectorAll('.window').forEach(w => w.style.zIndex = 10);
+                win.style.zIndex = 20;
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+                if (e.target === header || header.contains(e.target)) isDragging = true;
+            }
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+                    xOffset = currentX;
+                    yOffset = currentY;
+                    win.style.transform = `translate(${currentX}px, ${currentY}px)`;
+                }
+            }
+            function dragEnd() { isDragging = false; }
+        });
+    </script>
+</body>
+</html>
